@@ -1,0 +1,322 @@
+---
+title: 'Get Directions'
+api: 'POST /directions/'
+description: 'Get turn-by-turn directions with optional super-safe bike routing'
+---
+
+## Overview
+
+Get directions between waypoints with support for cycling, walking, and driving profiles. Optionally use the `supersafe` flag for bike routing on a dedicated cycling network with safety prioritization.
+
+## Authentication
+
+This endpoint requires Auth0 authentication. Include your access token in the Authorization header:
+
+```
+Authorization: Bearer YOUR_AUTH0_ACCESS_TOKEN
+```
+
+## Request Body
+
+<ParamField body="coordinates" type="array" required>
+  Array of [longitude, latitude] waypoints. Minimum 2, maximum 25.
+  
+  Example: `[[lon1, lat1], [lon2, lat2]]`
+</ParamField>
+
+<ParamField body="profile" type="string" default="cycling">
+  Routing profile. Options:
+  - `cycling` - Optimized for bicycles
+  - `walking` - Optimized for pedestrians
+  - `driving` - Optimized for cars
+  - `driving-traffic` - Driving with traffic data
+</ParamField>
+
+<ParamField body="supersafe" type="boolean" default="false">
+  Enable super-safe bike routing using Cyclemate's network router. Only applies to `cycling` profile.
+  
+  When enabled, routes prioritize:
+  - Protected bike lanes
+  - Low-traffic streets
+  - Bike paths and greenways
+  - Reduced elevation gain
+</ParamField>
+
+<ParamField body="options" type="object">
+  Additional routing options (passed to Mapbox when not using supersafe)
+  
+  <Expandable title="Options Object">
+    <ParamField body="geometries" type="string" default="geojson">
+      Format of returned geometry: `geojson` or `polyline`
+    </ParamField>
+    <ParamField body="overview" type="string" default="full">
+      Level of detail: `full`, `simplified`, or `false`
+    </ParamField>
+    <ParamField body="steps" type="boolean" default="true">
+      Include turn-by-turn instructions
+    </ParamField>
+    <ParamField body="alternatives" type="boolean" default="false">
+      Return alternative routes
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+<ResponseField name="routes" type="array">
+  Array of route objects
+  
+  <Expandable title="Route Object">
+    <ResponseField name="distance" type="number">
+      Total route distance in meters
+    </ResponseField>
+    <ResponseField name="duration" type="number">
+      Estimated travel time in seconds
+    </ResponseField>
+    <ResponseField name="geometry" type="object">
+      Route geometry as GeoJSON LineString
+    </ResponseField>
+    <ResponseField name="legs" type="array">
+      Array of leg objects (one per waypoint pair)
+      
+      <Expandable title="Leg Object">
+        <ResponseField name="distance" type="number">
+          Leg distance in meters
+        </ResponseField>
+        <ResponseField name="duration" type="number">
+          Leg duration in seconds
+        </ResponseField>
+        <ResponseField name="steps" type="array">
+          Turn-by-turn instructions
+          
+          <Expandable title="Step Object">
+            <ResponseField name="distance" type="number">
+              Step distance in meters
+            </ResponseField>
+            <ResponseField name="duration" type="number">
+              Step duration in seconds
+            </ResponseField>
+            <ResponseField name="name" type="string">
+              Street name
+            </ResponseField>
+            <ResponseField name="maneuver" type="object">
+              Turn instruction details
+            </ResponseField>
+            <ResponseField name="geometry" type="object">
+              Step geometry as GeoJSON LineString
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="waypoints" type="array">
+  Snapped waypoint locations
+</ResponseField>
+
+<ResponseField name="code" type="string">
+  Response code: `Ok` on success
+</ResponseField>
+
+<ResponseField name="metadata" type="object">
+  Routing metadata
+  
+  <ResponseField name="routing_engine" type="string">
+    `mapbox` or `network_router` (when supersafe is enabled)
+  </ResponseField>
+  <ResponseField name="profile" type="string">
+    Routing profile used
+  </ResponseField>
+  <ResponseField name="waypoint_count" type="number">
+    Number of waypoints
+  </ResponseField>
+</ResponseField>
+
+## Request Example
+
+### Standard Cycling Route
+
+```bash cURL
+curl -X POST "https://api.cyclemate.com/directions/" \
+  -H "Authorization: Bearer YOUR_AUTH0_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "coordinates": [[-73.9851, 40.7589], [-73.9712, 40.7614]],
+    "profile": "cycling",
+    "options": {
+      "steps": true,
+      "overview": "full"
+    }
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.cyclemate.com/directions/', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_AUTH0_ACCESS_TOKEN',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    coordinates: [[-73.9851, 40.7589], [-73.9712, 40.7614]],
+    profile: 'cycling',
+  }),
+});
+
+const directions = await response.json();
+console.log(`Route distance: ${directions.routes[0].distance}m`);
+```
+
+### Super-Safe Bike Route
+
+```javascript JavaScript
+const response = await fetch('https://api.cyclemate.com/directions/', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_AUTH0_ACCESS_TOKEN',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    coordinates: [[-73.9851, 40.7589], [-73.9712, 40.7614]],
+    profile: 'cycling',
+    supersafe: true,
+  }),
+});
+
+const directions = await response.json();
+console.log(`Super-safe route: ${directions.routes[0].distance}m`);
+```
+
+```python Python
+import requests
+
+url = "https://api.cyclemate.com/directions/"
+headers = {
+    "Authorization": "Bearer YOUR_AUTH0_ACCESS_TOKEN"
+}
+data = {
+    "coordinates": [[-73.9851, 40.7589], [-73.9712, 40.7614]],
+    "profile": "cycling",
+    "supersafe": True
+}
+
+response = requests.post(url, headers=headers, json=data)
+directions = response.json()
+```
+
+## Response Example
+
+```json
+{
+  "routes": [
+    {
+      "distance": 1523.4,
+      "duration": 365.2,
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-73.9851, 40.7589],
+          [-73.9845, 40.7595],
+          [-73.9712, 40.7614]
+        ]
+      },
+      "legs": [
+        {
+          "distance": 1523.4,
+          "duration": 365.2,
+          "steps": [
+            {
+              "distance": 150.2,
+              "duration": 36.0,
+              "name": "West 52nd Street",
+              "maneuver": {
+                "type": "depart",
+                "instruction": "Head east on West 52nd Street",
+                "bearing_before": 0,
+                "bearing_after": 90,
+                "location": [-73.9851, 40.7589]
+              },
+              "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                  [-73.9851, 40.7589],
+                  [-73.9845, 40.7589]
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "waypoints": [
+    {
+      "location": [-73.9851, 40.7589],
+      "name": "West 52nd Street"
+    },
+    {
+      "location": [-73.9712, 40.7614],
+      "name": "Central Park West"
+    }
+  ],
+  "code": "Ok",
+  "metadata": {
+    "routing_engine": "network_router",
+    "profile": "cycling",
+    "waypoint_count": 2
+  }
+}
+```
+
+## Super-Safe Routing
+
+When `supersafe: true` is enabled for cycling routes, the API uses Cyclemate's proprietary network router that:
+
+1. **Prioritizes Safety**: Routes prefer protected bike lanes, bike paths, and low-traffic streets
+2. **Local Knowledge**: Uses city-specific bike infrastructure data (NYC, LA, SF, Chicago, London)
+3. **Elevation Aware**: Minimizes elevation gain when possible
+4. **Real-time Updates**: Incorporates user feedback and recent infrastructure changes
+
+## Error Responses
+
+<ResponseField name="400" type="object">
+  Invalid request
+
+  ```json
+  {
+    "error": "At least 2 coordinates are required"
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="400" type="object">
+  Invalid profile
+
+  ```json
+  {
+    "error": "Invalid profile. Must be one of: cycling, walking, driving, driving-traffic"
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="503" type="object">
+  Service unavailable
+
+  ```json
+  {
+    "error": "Mapbox service temporarily unavailable",
+    "details": "Request timed out"
+  }
+  ```
+</ResponseField>
+
+## Notes
+
+- Coordinates must be in `[longitude, latitude]` format
+- Maximum 25 waypoints per request
+- Super-safe routing is only available in supported cities (NYC, LA, SF Bay Area, Chicago, London)
+- Duration estimates assume average cycling speed of 15 km/h (9.3 mph)
+- Turn-by-turn instructions are in English
+

@@ -1,43 +1,75 @@
-# Mintlify Starter Kit
+# Cyclemate API Documentation
 
-Use the starter kit to get your docs deployed and ready to customize.
+This directory contains the Mintlify-powered API documentation for Cyclemate's public APIs.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+## Documentation Structure
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+### Introduction
+- `api-reference/introduction.mdx` - Overview, authentication, and key features
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+### Events API
+- `api-reference/events/nearby.mdx` - Find cycling events, group rides, and leisure routes
+- `api-reference/events/detail.mdx` - Get detailed event information
 
-## Development
+### Bikes API
+- `api-reference/bikes/nearby.mdx` - Real-time bike-share availability (docked and dockless)
 
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
+### Routing API
+- `api-reference/routing/directions.mdx` - Turn-by-turn directions with optional super-safe routing
+- `api-reference/routing/multimodal.mdx` - Multi-modal routes with bike-share integration
 
+### Search API
+- `api-reference/search/mapbox-search.mdx` - Place search with bike-friendly enrichment
+
+### Location API
+- `api-reference/location/nearby-areas.mdx` - Find nearby areas/neighborhoods
+
+### Analytics API
+- `api-reference/analytics/qr-track.mdx` - QR code scan tracking
+
+## Configuration
+
+The documentation is configured via `docs.json`, which defines:
+- Navigation structure
+- Theme and colors
+- Logo and branding
+
+## Running Locally
+
+To preview the documentation locally:
+
+```bash
+# Install Mintlify CLI
+npm i -g mintlify
+
+# Navigate to docs directory
+cd docs
+
+# Start the dev server
+mintlify dev
 ```
-npm i -g mint
-```
 
-Run the following command at the root of your documentation, where your `docs.json` is located:
+The documentation will be available at `http://localhost:3000`.
 
-```
-mint dev
-```
+## Deployment
 
-View your local preview at `http://localhost:3000`.
+The documentation can be deployed to Mintlify's hosting platform or self-hosted using their enterprise options.
 
-## Publishing changes
+## API Endpoints Documented
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+All endpoints require Auth0 authentication:
 
-## Need help?
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/events/nearby/` | Find nearby events and leisure routes |
+| GET | `/bikes/nearby/` | Find available bikes (docked/dockless) |
+| POST | `/directions/` | Get turn-by-turn directions |
+| POST | `/multi-modal/` | Get multi-modal bike-share routes |
 
-### Troubleshooting
+## Notes
 
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
-
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+- All coordinates use `[longitude, latitude]` format (GeoJSON standard)
+- Distances are in meters or miles as specified per endpoint
+- Responses are JSON format
+- Auth0 bearer token required for all requests
+- Documentation follows Mintlify best practices with interactive examples

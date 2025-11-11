@@ -1,0 +1,277 @@
+---
+title: 'Get Nearby Bikes'
+api: 'GET /bikes/nearby/'
+description: 'Find available bikes near a location (docked and dockless)'
+---
+
+## Overview
+
+Get real-time bike availability data near a location. Returns both station-based bikes (docked) and dockless bikes from various bike-share providers including Citi Bike, Lime, Spin, and others.
+
+## Authentication
+
+This endpoint requires Auth0 authentication. Include your access token in the Authorization header:
+
+```
+Authorization: Bearer YOUR_AUTH0_ACCESS_TOKEN
+```
+
+## Query Parameters
+
+<ParamField query="latitude" type="number" required>
+  User's latitude (-90 to 90). Can also use `lat` as parameter name.
+</ParamField>
+
+<ParamField query="longitude" type="number" required>
+  User's longitude (-180 to 180). Can also use `lon` or `lng` as parameter name.
+</ParamField>
+
+<ParamField query="radius" type="number" default="1000">
+  Search radius in meters (default: 1000m)
+</ParamField>
+
+<ParamField query="limit" type="number" default="200">
+  Maximum number of results per category (stations and dockless bikes)
+</ParamField>
+
+## Response
+
+<ResponseField name="stations" type="array">
+  Array of bike station objects (docked bikes)
+  
+  <Expandable title="Station Object">
+    <ResponseField name="station_id" type="string">
+      Unique station identifier
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Station name
+    </ResponseField>
+    <ResponseField name="lat" type="number">
+      Station latitude
+    </ResponseField>
+    <ResponseField name="lon" type="number">
+      Station longitude
+    </ResponseField>
+    <ResponseField name="num_bikes_available" type="number">
+      Number of bikes currently available
+    </ResponseField>
+    <ResponseField name="num_docks_available" type="number">
+      Number of empty docks available
+    </ResponseField>
+    <ResponseField name="capacity" type="number">
+      Total station capacity
+    </ResponseField>
+    <ResponseField name="is_installed" type="boolean">
+      Whether the station is installed and operational
+    </ResponseField>
+    <ResponseField name="is_renting" type="boolean">
+      Whether bikes can currently be rented
+    </ResponseField>
+    <ResponseField name="is_returning" type="boolean">
+      Whether bikes can currently be returned
+    </ResponseField>
+    <ResponseField name="last_reported" type="number">
+      Unix timestamp of last status update
+    </ResponseField>
+    <ResponseField name="distance" type="number">
+      Distance from query location in meters
+    </ResponseField>
+    <ResponseField name="brand" type="string">
+      Bike-share provider name (e.g., "Citi Bike")
+    </ResponseField>
+    <ResponseField name="api_type" type="string">
+      API type (e.g., "gbfs", "tfl")
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="dockless_bikes" type="array">
+  Array of dockless bike objects
+  
+  <Expandable title="Dockless Bike Object">
+    <ResponseField name="bike_id" type="string">
+      Unique bike identifier
+    </ResponseField>
+    <ResponseField name="lat" type="number">
+      Bike latitude
+    </ResponseField>
+    <ResponseField name="lon" type="number">
+      Bike longitude
+    </ResponseField>
+    <ResponseField name="is_reserved" type="boolean">
+      Whether the bike is currently reserved
+    </ResponseField>
+    <ResponseField name="is_disabled" type="boolean">
+      Whether the bike is disabled
+    </ResponseField>
+    <ResponseField name="vehicle_type" type="string">
+      Type of vehicle (e.g., "bike", "scooter")
+    </ResponseField>
+    <ResponseField name="distance" type="number">
+      Distance from query location in meters
+    </ResponseField>
+    <ResponseField name="brand" type="string">
+      Provider name (e.g., "Lime", "Spin")
+    </ResponseField>
+    <ResponseField name="provider" type="string">
+      Provider identifier
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="metadata" type="object">
+  Metadata about the response
+  
+  <Expandable title="Metadata Object">
+    <ResponseField name="total_stations" type="number">
+      Total number of stations returned
+    </ResponseField>
+    <ResponseField name="total_dockless" type="number">
+      Total number of dockless bikes returned
+    </ResponseField>
+    <ResponseField name="providers" type="array">
+      List of providers included in results
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Request Example
+
+```bash cURL
+curl "https://api.cyclemate.com/bikes/nearby/?latitude=40.7589&longitude=-73.9851&radius=500" \
+  -H "Authorization: Bearer YOUR_AUTH0_ACCESS_TOKEN" \
+  -H "Content-Type: application/json"
+```
+
+```javascript JavaScript
+const response = await fetch(
+  'https://api.cyclemate.com/bikes/nearby/?latitude=40.7589&longitude=-73.9851&radius=500',
+  {
+    method: 'GET',
+    headers: {
+      'Authorization': 'Bearer YOUR_AUTH0_ACCESS_TOKEN',
+      'Content-Type': 'application/json',
+    },
+  }
+);
+
+const bikes = await response.json();
+console.log(`Found ${bikes.stations.length} stations and ${bikes.dockless_bikes.length} dockless bikes`);
+```
+
+```python Python
+import requests
+
+url = "https://api.cyclemate.com/bikes/nearby/"
+headers = {
+    "Authorization": "Bearer YOUR_AUTH0_ACCESS_TOKEN"
+}
+params = {
+    "latitude": 40.7589,
+    "longitude": -73.9851,
+    "radius": 500
+}
+
+response = requests.get(url, headers=headers, params=params)
+data = response.json()
+stations = data["stations"]
+dockless = data["dockless_bikes"]
+```
+
+## Response Example
+
+```json
+{
+  "stations": [
+    {
+      "station_id": "3639",
+      "name": "W 52 St & 11 Ave",
+      "lat": 40.76727216,
+      "lon": -73.99392888,
+      "num_bikes_available": 12,
+      "num_docks_available": 27,
+      "capacity": 39,
+      "is_installed": true,
+      "is_renting": true,
+      "is_returning": true,
+      "last_reported": 1699564800,
+      "distance": 245.8,
+      "brand": "Citi Bike",
+      "api_type": "gbfs"
+    }
+  ],
+  "dockless_bikes": [
+    {
+      "bike_id": "lime_123abc",
+      "lat": 40.7589,
+      "lon": -73.9851,
+      "is_reserved": false,
+      "is_disabled": false,
+      "vehicle_type": "bike",
+      "distance": 50.2,
+      "brand": "Lime",
+      "provider": "lime"
+    },
+    {
+      "bike_id": "spin_456def",
+      "lat": 40.7592,
+      "lon": -73.9848,
+      "is_reserved": false,
+      "is_disabled": false,
+      "vehicle_type": "bike",
+      "distance": 75.3,
+      "brand": "Spin",
+      "provider": "spin"
+    }
+  ],
+  "metadata": {
+    "total_stations": 1,
+    "total_dockless": 2,
+    "providers": ["Citi Bike", "Lime", "Spin"]
+  }
+}
+```
+
+## Supported Providers
+
+Cyclemate aggregates data from multiple bike-share providers:
+
+- **Docked Systems**: Citi Bike (NYC), Bay Wheels (SF), Divvy (Chicago), TfL Cycle Hire (London), and many more GBFS-compliant systems
+- **Dockless Systems**: Lime, Spin, Jump, and other free-floating bike providers
+
+## Notes
+
+- Bike availability data is cached and updated every 30-60 seconds
+- Results are ordered by distance from the query location
+- The `limit` parameter applies separately to stations and dockless bikes
+- Distance is calculated using the Haversine formula (great-circle distance)
+- Only operational bikes/stations are returned (excludes disabled or out-of-service items)
+
+## Data Freshness
+
+- **Stations**: Updated every 30-60 seconds from GBFS feeds
+- **Dockless Bikes**: Updated every 60 seconds from provider APIs
+- Check the `last_reported` timestamp for station data freshness
+
+## Error Responses
+
+<ResponseField name="400" type="object">
+  Invalid coordinates
+
+  ```json
+  {
+    "error": "latitude and longitude query parameters are required"
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="400" type="object">
+  Invalid coordinate values
+
+  ```json
+  {
+    "error": "Invalid latitude/longitude values"
+  }
+  ```
+</ResponseField>
+

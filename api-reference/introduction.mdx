@@ -1,33 +1,112 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: 'Cyclemate API'
+description: 'Public API documentation for Cyclemate - bike routing and event discovery platform'
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+## Welcome to Cyclemate API
 
-## Welcome
+Cyclemate provides **4 public APIs** for bike routing, event discovery, and bike-share availability. These APIs are designed to help developers build cycling-focused applications with rich routing capabilities and real-time bike availability data.
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+## Base URL
 
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+```
+https://your-api-domain.com
+```
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+**Auth0 authentication required.** All API requests must include a valid Auth0 bearer token in the Authorization header:
 
-```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+```bash
+Authorization: Bearer YOUR_AUTH0_ACCESS_TOKEN
 ```
+
+### Getting an Auth0 Token
+
+1. Sign up or log in through your Cyclemate app
+2. Your app will receive an Auth0 access token
+3. Include this token in the `Authorization` header for all API requests
+
+### Token Format
+
+```bash
+curl https://api.cyclemate.com/events/nearby/?latitude=40.7589&longitude=-73.9851 \
+  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+## Rate Limiting
+
+Please be respectful of our API resources. While we don't enforce strict rate limits on public endpoints, excessive usage may result in temporary throttling.
+
+## Public APIs
+
+<CardGroup cols={2}>
+  <Card title="Nearby Events" icon="calendar" href="/api-reference/events/nearby">
+    Find nearby cycling events and leisure routes
+  </Card>
+  <Card title="Nearby Bikes" icon="bicycle" href="/api-reference/bikes/nearby">
+    Real-time bike-share availability (docked and dockless)
+  </Card>
+  <Card title="Directions" icon="route" href="/api-reference/routing/directions">
+    Turn-by-turn directions with super-safe bike routing
+  </Card>
+  <Card title="Multi-Modal Routing" icon="route" href="/api-reference/routing/multimodal">
+    Multi-modal routing with bike-share integration
+  </Card>
+</CardGroup>
+
+## Response Format
+
+All API endpoints return JSON responses with the following general structure:
+
+**Success Response:**
+```json
+{
+  "data": {},
+  "metadata": {}
+}
+```
+
+**Error Response:**
+```json
+{
+  "error": "Error message",
+  "details": "Additional error details"
+}
+```
+
+## Coordinate Format
+
+All coordinates in the API use the standard `[longitude, latitude]` format (GeoJSON standard), unless otherwise specified.
+
+- **Longitude**: -180 to 180 (East-West position)
+- **Latitude**: -90 to 90 (North-South position)
+
+## API Overview
+
+| Endpoint | Method | Description | Auth Required |
+|----------|--------|-------------|---------------|
+| `/events/nearby/` | GET | Find nearby events and leisure routes | ✅ Yes (Auth0) |
+| `/bikes/nearby/` | GET | Real-time bike-share availability | ✅ Yes (Auth0) |
+| `/directions/` | POST | Turn-by-turn directions | ✅ Yes (Auth0) |
+| `/multi-modal/` | POST | Multi-modal bike-share routing | ✅ Yes (Auth0) |
+
+## Legacy URLs
+
+For backward compatibility, the following legacy URLs are still supported:
+- `/mapbox/directions/` → Use `/directions/` instead
+- `/mapbox/directions/bikeshare/` → Use `/multi-modal/` instead
+
+## Private APIs
+
+Many other endpoints exist for internal/authenticated use but are not publicly documented. These include:
+- User profile and route management
+- Admin dashboard and management tools
+- Internal analytics and tracking
+- Search and location services
+
+If you need access to additional functionality, please contact our team.
+
+## Support
+
+For questions, issues, or feature requests, please contact our support team.

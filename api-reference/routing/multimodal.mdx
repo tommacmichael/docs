@@ -1,0 +1,347 @@
+---
+title: 'Get Multi-modal Route'
+api: 'POST /multi-modal/'
+description: 'Get multi-step routes combining walking, bike-share, and personal bikes'
+---
+
+## Overview
+
+Get comprehensive routing options that integrate bike-share availability. Returns multiple route alternatives including:
+- **Personal Bike**: Direct cycling route
+- **Docked Bike-Share**: Walk to station → cycle → walk to destination
+- **Dockless Bike-Share**: Walk to bike → cycle to destination (per provider)
+
+## Authentication
+
+This endpoint requires Auth0 authentication. Include your access token in the Authorization header:
+
+```
+Authorization: Bearer YOUR_AUTH0_ACCESS_TOKEN
+```
+
+## Request Body
+
+<ParamField body="origin" type="array" required>
+  Starting point as `[longitude, latitude]`
+</ParamField>
+
+<ParamField body="destination" type="array" required>
+  Ending point as `[longitude, latitude]`
+</ParamField>
+
+<ParamField body="supersafe" type="boolean" default="false">
+  Enable super-safe bike routing for cycling segments
+</ParamField>
+
+<ParamField body="event_id" type="number">
+  Optional event ID. If provided and event has a route, includes event route as final cycling segment.
+</ParamField>
+
+<ParamField body="destination_id" type="number">
+  Optional destination ID for enriched destination information in response
+</ParamField>
+
+<ParamField body="name" type="string">
+  Optional name for the destination (used if destination_id not provided)
+</ParamField>
+
+## Response
+
+Returns an array of route alternatives, each containing a sequence of steps:
+
+<ResponseField name="routes" type="array">
+  Array of route alternative objects
+  
+  <Expandable title="Route Alternative">
+    <ResponseField name="name" type="string">
+      Route name (e.g., "My bike", "Citi Bike", "Lime")
+    </ResponseField>
+    
+    <ResponseField name="type" type="string">
+      Route type:
+      - `Personal` - Using your own bike
+      - `GBFS` - Station-based bike-share (e.g., Citi Bike)
+      - `TFL` - Transport for London bike-share
+      - `Dockless` - Free-floating bike-share (e.g., Lime, Spin)
+    </ResponseField>
+    
+    <ResponseField name="route" type="array">
+      Array of route step objects
+      
+      <Expandable title="Route Step">
+        <ResponseField name="step" type="number">
+          Step number (1-indexed)
+        </ResponseField>
+        
+        <ResponseField name="type" type="string">
+          Step type: `walking` or `cycling`
+        </ResponseField>
+        
+        <ResponseField name="route" type="object">
+          Mapbox-compatible route object with geometry, distance, duration, and turn-by-turn instructions
+        </ResponseField>
+        
+        <ResponseField name="reroutable" type="boolean">
+          Whether this step can be rerouted (false for event routes)
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="event" type="object">
+      Event information (if event_id was provided)
+    </ResponseField>
+    
+    <ResponseField name="destination" type="object">
+      Destination information (if destination_id or name was provided)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Request Example
+
+### Basic Multi-modal Route
+
+```bash cURL
+curl -X POST "https://api.cyclemate.com/multi-modal/" \
+  -H "Authorization: Bearer YOUR_AUTH0_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "origin": [-73.9851, 40.7589],
+    "destination": [-73.9712, 40.7614]
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.cyclemate.com/multi-modal/', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_AUTH0_ACCESS_TOKEN',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    origin: [-73.9851, 40.7589],
+    destination: [-73.9712, 40.7614],
+  }),
+});
+
+const routes = await response.json();
+console.log(`Found ${routes.length} route alternatives`);
+```
+
+### With Super-Safe Routing and Event
+
+```javascript JavaScript
+const response = await fetch('https://api.cyclemate.com/multi-modal/', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_AUTH0_ACCESS_TOKEN',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    origin: [-73.9851, 40.7589],
+    destination: [-73.9712, 40.7614],
+    supersafe: true,
+    event_id: 123,
+    destination_id: 45,
+  }),
+});
+
+const routes = await response.json();
+```
+
+```python Python
+import requests
+
+url = "https://api.cyclemate.com/multi-modal/"
+headers = {
+    "Authorization": "Bearer YOUR_AUTH0_ACCESS_TOKEN"
+}
+data = {
+    "origin": [-73.9851, 40.7589],
+    "destination": [-73.9712, 40.7614],
+    "supersafe": True,
+    "event_id": 123
+}
+
+response = requests.post(url, headers=headers, json=data)
+routes = response.json()
+```
+
+## Response Example
+
+```json
+[
+  {
+    "name": "My bike",
+    "type": "Personal",
+    "route": [
+      {
+        "step": 1,
+        "type": "cycling",
+        "route": {
+          "routes": [{
+            "distance": 1523.4,
+            "duration": 365.2,
+            "geometry": {
+              "type": "LineString",
+              "coordinates": [[-73.9851, 40.7589], [-73.9712, 40.7614]]
+            },
+            "legs": [...]
+          }],
+          "waypoints": [...],
+          "code": "Ok"
+        }
+      }
+    ],
+    "destination": {
+      "name": "Central Park",
+      "latitude": 40.7614,
+      "longitude": -73.9712
+    }
+  },
+  {
+    "name": "Citi Bike",
+    "type": "GBFS",
+    "route": [
+      {
+        "step": 1,
+        "type": "walking",
+        "route": {
+          "routes": [{
+            "distance": 245.8,
+            "duration": 180.0,
+            "geometry": {...}
+          }]
+        }
+      },
+      {
+        "step": 2,
+        "type": "cycling",
+        "route": {
+          "routes": [{
+            "distance": 1200.5,
+            "duration": 288.0,
+            "geometry": {...}
+          }]
+        }
+      },
+      {
+        "step": 3,
+        "type": "walking",
+        "route": {
+          "routes": [{
+            "distance": 150.2,
+            "duration": 110.0,
+            "geometry": {...}
+          }]
+        }
+      }
+    ],
+    "destination": {
+      "name": "Central Park",
+      "latitude": 40.7614,
+      "longitude": -73.9712
+    }
+  },
+  {
+    "name": "Lime",
+    "type": "Dockless",
+    "route": [
+      {
+        "step": 1,
+        "type": "walking",
+        "route": {...}
+      },
+      {
+        "step": 2,
+        "type": "cycling",
+        "route": {...}
+      }
+    ],
+    "destination": {
+      "name": "Central Park",
+      "latitude": 40.7614,
+      "longitude": -73.9712
+    }
+  }
+]
+```
+
+## Route Types Explained
+
+### Personal Bike Route
+- Direct cycling route from origin to destination
+- No walking segments unless event route is involved
+- Always appears first in results
+
+### Docked Bike-Share Route (GBFS/TFL)
+- **Step 1**: Walk from origin to nearest station with bikes available
+- **Step 2**: Cycle from origin station to destination station
+- **Step 3**: Walk from destination station to final destination
+- Only included if suitable stations are found within 1.5km
+
+### Dockless Bike-Share Route
+- **Step 1**: Walk from origin to nearest available bike
+- **Step 2**: Cycle from bike location to destination
+- One route per provider (Lime, Spin, etc.)
+- Only included if bikes are found within 1.5km
+
+## Event Integration
+
+When `event_id` is provided and the event has a defined route:
+
+1. All cycling segments route to the event's starting point
+2. An additional non-reroutable cycling step is added for the event route
+3. Event details are included in each route alternative
+4. Final walking segment (for docked bike-share) goes to nearest station to event endpoint
+
+## Notes
+
+- Routes are automatically filtered to remove alternatives >3x slower than the personal bike route
+- Bike availability is fetched in real-time from GBFS feeds and provider APIs
+- Distance calculations use the Haversine formula
+- Walking speed assumed: 1.4 m/s (5 km/h)
+- Cycling speed assumed: 4.17 m/s (15 km/h)
+- Maximum bike search radius: 1500 meters
+- Results are ordered: Personal, Docked bike-share, Dockless bike-share
+
+## Error Responses
+
+<ResponseField name="400" type="object">
+  Invalid coordinates
+
+  ```json
+  {
+    "error": "origin and destination must be [lon, lat] arrays"
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="404" type="object">
+  No viable routes found
+
+  ```json
+  {
+    "error": "No viable bike-share route found"
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="500" type="object">
+  Server error
+
+  ```json
+  {
+    "error": "Error message",
+    "details": "Additional details"
+  }
+  ```
+</ResponseField>
+
+## Performance
+
+- Typical response time: 800-1500ms
+- Bike availability queries: ~100-200ms
+- Routing segments computed in parallel
+- Results cached when possible
+
